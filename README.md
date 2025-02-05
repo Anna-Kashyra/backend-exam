@@ -36,14 +36,14 @@ This project is a REST API built with Nest.js, designed to handle user authentic
 
 - JWT (JSON Web Token) – Secure user authentication.
 
-- Docker – Containerization for easy deployment and testing.
-
 - ESLint & Prettier – Code quality and formatting tools.
 
 
 ## Installation & Setup
 
 ### 1. Clone the Repository
+
+https://github.com/Anna-Kashyra/backend-exam.git
 
 ### 2. Install Dependencies
 
@@ -63,15 +63,35 @@ $ npm run start:dev
 # Production Mode
 $ npm run build
 $ npm run start
-
-# Run with Docker
-$ docker-compose up --build
 ```
 
 ## API Endpoints
 
+All API endpoints are documented using Swagger. You can explore all available endpoints and test requests directly in the browser by accessing /api/docs after starting the application.
 
+## Database migrations
 
-## License
+This project uses a migration system to manage the database schema.
+
+### Automatic application of migrations
+
+Migrations are applied automatically when the server starts thanks to the parameter `migrationsRun: true`  in `src/database/database.service.ts`.
+
+### Manually managing migrations
+
+Якщо вам потрібно застосувати або відкотити міграції вручну, використовуйте наступні команди:
+
+```bash
+# Generation of new migration:
+$ npm run typeorm migration:generate
+
+# Running migrations:
+$ npm run typeorm migration:run
+
+# Revert of the last migration:
+$ npm run typeorm migration:revert
+```
+
+## License 
 
 This project is licensed under the MIT License.
