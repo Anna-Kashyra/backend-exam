@@ -37,10 +37,6 @@ import { RefreshGuard } from './guards/refresh.guard';
     AuthCacheRedisService,
     BearerStrategy,
     RefreshGuard,
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: BearerStrategy,
-    // },
   ],
   exports: [],
 })

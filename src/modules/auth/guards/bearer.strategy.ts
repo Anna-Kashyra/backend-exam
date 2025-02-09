@@ -9,6 +9,7 @@ import { IJwtPayload } from '../interfaces/jwt.payload.interface';
 import { UserRepository } from '../../repository/services/user.repository';
 import { AuthMapper } from '../services/auth.mapper';
 import { IUserData } from '../interfaces/user.data.interface';
+import { ERROR_MESSAGES } from '../../../common/exceptions/error.constants';
 
 @Injectable()
 export class BearerStrategy extends PassportStrategy(Strategy, 'bearer') {
@@ -22,7 +23,7 @@ export class BearerStrategy extends PassportStrategy(Strategy, 'bearer') {
 
   async validate(accessToken: string): Promise<IUserData> {
     if (!accessToken) {
-      throw new UnauthorizedException('Missing access token');
+      throw new UnauthorizedException(ERROR_MESSAGES.MISSING_TOKEN);
     }
 
     const payload: IJwtPayload = await this.tokenService.verifyToken(
@@ -30,7 +31,7 @@ export class BearerStrategy extends PassportStrategy(Strategy, 'bearer') {
       TokenTypeEnum.ACCESS,
     );
     if (!payload || !payload.userId) {
-      throw new UnauthorizedException('Token is not valid');
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_TOKEN);
     }
 
     const tokenExists = await this.authCacheRedisService.isTokenExist(
@@ -39,14 +40,14 @@ export class BearerStrategy extends PassportStrategy(Strategy, 'bearer') {
       accessToken,
     );
     if (!tokenExists) {
-      throw new UnauthorizedException('Token is not valid');
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_TOKEN);
     }
 
     const user = await this.userRepository.findOne({
       where: { id: payload.userId },
     });
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
     return AuthMapper.toUserDataDTO(user, payload.deviceId);
   }

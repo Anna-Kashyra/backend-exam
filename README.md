@@ -36,6 +36,8 @@ This project is a REST API built with Nest.js, designed to handle user authentic
 
 - JWT (JSON Web Token) – Secure user authentication.
 
+- Redis – In-memory data structure store used as a cache and message broker for improving application performance and handling real-time data.
+
 - ESLint & Prettier – Code quality and formatting tools.
 
 
@@ -79,7 +81,7 @@ Migrations are applied automatically when the server starts thanks to the parame
 
 ### Manually managing migrations
 
-Якщо вам потрібно застосувати або відкотити міграції вручну, використовуйте наступні команди:
+If you need to apply or roll back migrations manually, use the following commands:
 
 ```bash
 # Generation of new migration:
@@ -91,7 +93,3 @@ $ npm run typeorm migration:run
 # Revert of the last migration:
 $ npm run typeorm migration:revert
 ```
-
-## License 
-
-This project is licensed under the MIT License.

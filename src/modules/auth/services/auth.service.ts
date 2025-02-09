@@ -12,6 +12,7 @@ import { AuthResponseDto } from '../dto/auth.response.dto';
 import { UserService } from '../../user/services/user.service';
 import { IUserData } from '../interfaces/user.data.interface';
 import { TokenPairResponseDto } from '../dto/token.pair.response.dto';
+import { ERROR_MESSAGES } from '../../../common/exceptions/error.constants';
 
 @Injectable()
 export class AuthService {
@@ -60,12 +61,12 @@ export class AuthService {
       select: { password: true, id: true },
     });
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_PASSWORD);
     }
     const pair = await this.tokenService.generateAuthTokens({
       userId: user.id,
@@ -99,6 +100,9 @@ export class AuthService {
   }
 
   public async refresh(userData: IUserData): Promise<TokenPairResponseDto> {
+    if (!userData?.userId || !userData?.deviceId) {
+      throw new UnauthorizedException('Invalid request');
+    }
     await Promise.all([
       this.refreshTokenRepository.delete({
         deviceId: userData.deviceId,
@@ -141,6 +145,15 @@ export class AuthService {
         userData.userId,
         userData.deviceId,
       ),
+    ]);
+  }
+
+  public async logoutAll(userData: IUserData): Promise<void> {
+    await Promise.all([
+      this.refreshTokenRepository.delete({
+        userId: userData.userId,
+      }),
+      this.authCacheRedisService.deleteTokensForUser(userData.userId),
     ]);
   }
 }

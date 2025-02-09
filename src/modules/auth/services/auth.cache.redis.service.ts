@@ -44,6 +44,15 @@ export class AuthCacheRedisService {
     await this.redisService.deleteByKey(key);
   }
 
+  public async deleteTokensForUser(userId: string): Promise<void> {
+    const keysPattern = `${this.redisConfig.prefix}:${userId}:*`;
+    const keys = await this.redisService.keys(keysPattern);
+
+    for (const key of keys) {
+      await this.redisService.deleteByKey(key);
+    }
+  }
+
   private getKey(userId: string, deviceId: string): string {
     return `${this.redisConfig.prefix}:${userId}:${deviceId}`;
   }

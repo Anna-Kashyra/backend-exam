@@ -1,17 +1,18 @@
 import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
-
-import { AuthService } from './services/auth.service';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiForbiddenResponse,
+  ApiHeader,
   ApiNoContentResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+
+import { AuthService } from './services/auth.service';
 import { SignInRequestDto, SignUpRequestDto } from './dto/auth.request.dto';
 import { AuthResponseDto } from './dto/auth.response.dto';
 import { RefreshGuard } from './guards/refresh.guard';
@@ -37,7 +38,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid request data' })
   @ApiForbiddenResponse({ description: 'Forbidden' })
-  @Post('/sign-up')
+  @Post('sign-up')
   public async signUp(@Body() dto: SignUpRequestDto): Promise<AuthResponseDto> {
     return await this.authService.signUp(dto);
   }
@@ -53,13 +54,18 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid request data' })
   @ApiForbiddenResponse({ description: 'Forbidden' })
-  @Post('/sign-in')
+  @Post('sign-in')
   public async signIn(@Body() dto: SignInRequestDto): Promise<AuthResponseDto> {
     return await this.authService.signIn(dto);
   }
 
   @ApiBearerAuth()
   @UseGuards(RefreshGuard)
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer refresh token',
+    required: true,
+  })
   @ApiOperation({
     summary: 'Refresh token pair',
     description:
@@ -90,5 +96,21 @@ export class AuthController {
   @Post('logout')
   public async logout(@CurrentUser() userData: IUserData): Promise<void> {
     return await this.authService.logout(userData);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('bearer'))
+  @ApiOperation({
+    summary: 'Logout from all devices',
+    description: 'Ends all user sessions on all devices',
+  })
+  @ApiNoContentResponse({
+    description: 'User successfully logged out from all devices',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @HttpCode(204)
+  @Post('logout-all')
+  public async logoutAll(@CurrentUser() userData: IUserData): Promise<void> {
+    return await this.authService.logoutAll(userData);
   }
 }

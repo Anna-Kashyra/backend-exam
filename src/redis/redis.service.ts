@@ -45,4 +45,11 @@ export class RedisService {
   public async expire(key: string, time: number): Promise<number> {
     return this.redisClient.expire(key, time);
   }
+
+  /**
+   * Getting all keys by pattern
+   * */
+  public async keys(pattern: string): Promise<string[]> {
+    return this.redisClient.keys(pattern);
+  }
 }

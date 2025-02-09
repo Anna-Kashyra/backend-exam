@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { AppConfig } from './config/configs.type';
+import { GlobalExceptionFilter } from './common/exceptions/global.exceptions';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -42,6 +43,8 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   await app.listen(appConfig.port, appConfig.host, () => {
     console.log(`Server running on http://${appConfig.host}:${appConfig.port}`);

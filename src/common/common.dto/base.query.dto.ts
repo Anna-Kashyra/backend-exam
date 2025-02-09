@@ -2,25 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
-enum SortOrder {
+export enum SortOrder {
   ASC = 'ASC',
   DESC = 'DESC',
 }
 
 export class BaseQueryDto {
-  @ApiProperty({
-    required: false,
-    description: 'Sorting field (e.g., "firstName")',
-  })
-  @IsOptional()
-  @IsString()
-  public sort: string;
-
-  @ApiProperty({ required: false, default: SortOrder.ASC, enum: SortOrder })
-  @IsOptional()
-  @IsEnum(SortOrder)
-  public order: SortOrder = SortOrder.ASC;
-
   @ApiProperty({
     required: false,
     default: 1,
@@ -50,4 +37,9 @@ export class BaseQueryDto {
   @IsOptional()
   @IsString()
   public search: string;
+
+  @ApiProperty({ required: false, default: SortOrder.ASC, enum: SortOrder })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  public order: SortOrder = SortOrder.ASC;
 }

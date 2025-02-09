@@ -3,14 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseCustomEntity } from './base.custom.entity';
 import { UserEntity } from './user.entity';
 import { TableNameEnum } from './enums/table.name.enum';
-
-// export enum PostCategory {
-//   TECHNOLOGY = 'Technology',
-//   LIFESTYLE = 'Lifestyle',
-//   HEALTH = 'Health',
-//   FINANCE = 'Finance',
-//   ENTERTAINMENT = 'Entertainment',
-// }
+import { PostCategory } from './enums/post.category.enum';
 
 @Entity({ name: TableNameEnum.POSTS })
 export class PostEntity extends BaseCustomEntity {
@@ -19,6 +12,13 @@ export class PostEntity extends BaseCustomEntity {
 
   @Column('text')
   content: string;
+
+  @Column({
+    type: 'enum',
+    enum: PostCategory,
+    default: PostCategory.TECHNOLOGY,
+  })
+  category: PostCategory;
 
   @Column('integer', { nullable: true, default: 0 })
   likes?: number;

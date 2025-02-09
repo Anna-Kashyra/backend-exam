@@ -16,6 +16,6 @@ export class ShortUserResponseDto extends PickType(BaseUserResponseDto, [
   'id',
   'firstName',
   'lastName',
-  'avatar',
+  'email',
   'city',
 ]) {}

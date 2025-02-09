@@ -31,11 +31,8 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  public async verifyToken(
-    token: string,
-    type: TokenTypeEnum,
-  ): Promise<IJwtPayload> {
-    return await this.jwtService.verifyAsync(token, {
+  public verifyToken(token: string, type: TokenTypeEnum): Promise<IJwtPayload> {
+    return this.jwtService.verifyAsync(token, {
       secret: this.getSecret(type),
     });
   }

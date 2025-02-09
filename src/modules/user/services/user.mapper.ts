@@ -10,7 +10,7 @@ export class UserMapper {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
-      avatar: user.avatar || null,
+      email: user.email,
       city: user.city || null,
     };
   }

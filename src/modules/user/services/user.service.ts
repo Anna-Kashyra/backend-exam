@@ -3,8 +3,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { paginateRawAndEntities } from 'nestjs-typeorm-paginate';
 
 import { UserUpdateDto } from '../dto/req/user.update.dto';
 import { PaginatedDto } from '../../../common/common.dto/paginated.response.dto';
@@ -12,11 +12,13 @@ import {
   PublicUserResponseDto,
   ShortUserResponseDto,
 } from '../dto/res/public.user.response.dto';
-import { BaseQueryDto } from '../../../common/common.dto/base.query.dto';
 import { UserRepository } from '../../repository/services/user.repository';
 import { RefreshTokenRepository } from '../../repository/services/refresh.token.repository';
 import { IUserData } from '../../auth/interfaces/user.data.interface';
 import { UserMapper } from './user.mapper';
+import { UserEntity } from '../../../database/entities/user.entity';
+import { ERROR_MESSAGES } from '../../../common/exceptions/error.constants';
+import { UserQueryDto } from '../dto/req/user.query.dto';
 
 @Injectable()
 export class UserService {
@@ -28,85 +30,30 @@ export class UserService {
   ) {}
 
   public async findAllUsers(
-    query?: BaseQueryDto,
+    query?: UserQueryDto,
   ): Promise<PaginatedDto<ShortUserResponseDto>> {
-    const options = {
-      page: +query?.page || 1,
-      limit: +query?.limit || 10,
-    };
+    const [pagination, rawEntities] =
+      await this.userRepository.findAllUsers(query);
 
-    const queryBuilder = this.userRepository.createQueryBuilder('user');
-    queryBuilder.select([
-      'user.firstName',
-      'user.lastName',
-      'user.avatar',
-      'user.city',
-    ]);
-    // TODO
-    if (query.search) {
-      queryBuilder.andWhere('LOWER(user.firstName) LIKE :search', {
-        search: `%${query.search.toLowerCase()}%`,
-      });
-    }
-
-    const [pagination, rawEntities] = await paginateRawAndEntities(
-      queryBuilder,
-      options,
+    const users = rawEntities.map((user) =>
+      UserMapper.toShortResponseDTO(user as UserEntity),
     );
 
     return {
       page: pagination.meta.currentPage,
       pages: pagination.meta.totalPages,
       countItems: pagination.meta.totalItems,
-      entities: rawEntities as [ShortUserResponseDto],
+      entities: users,
     };
   }
 
-  public async findAllUsersWithPosts(
-    query?: BaseQueryDto,
-  ): Promise<PaginatedDto<ShortUserResponseDto>> {
-    const options = {
-      page: +query?.page || 1,
-      limit: +query?.limit || 10,
-    };
-
-    const [entities, count] = await this.userRepository.findAndCount({
-      select: {
-        firstName: true,
-        lastName: true,
-        avatar: true,
-        city: true,
-        id: true,
-      },
-      relations: {
-        posts: true,
-      },
-      skip: (options.page - 1) * options.limit,
-      take: options.limit,
-    });
-
-    return {
-      page: options.page,
-      pages: Math.ceil(count / options.limit),
-      countItems: count,
-      entities: entities,
-    };
-  }
-
-  public async getUserById(userId: string): Promise<PublicUserResponseDto> {
-    const user = await this.userRepository.findOneBy({
-      id: userId,
-    });
-    if (!user) {
-      throw new NotFoundException('User not found');
+  public async getMe(userData: IUserData): Promise<PublicUserResponseDto> {
+    if (!userData) {
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_TOKEN);
     }
-    return UserMapper.toPublicResponseDTO(user);
-  }
-
-  public async findMe(userData: IUserData): Promise<PublicUserResponseDto> {
-    const user = await this.userRepository.findOneBy({ id: userData.userId });
+    const user = await this.userRepository.findById(userData.userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
     this.logger.debug(`User found: ${JSON.stringify(user)}`);
     return UserMapper.toPublicResponseDTO(user);
@@ -116,28 +63,34 @@ export class UserService {
     userData: IUserData,
     dto: UserUpdateDto,
   ): Promise<PublicUserResponseDto> {
-    const user = await this.userRepository.findOneBy({ id: userData.userId });
+    const user = await this.userRepository.findById(userData.userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
-    const updatedUser = await this.userRepository.save({ ...user, ...dto });
+    const updatedUser = await this.userRepository.updateUser(user, dto);
     return UserMapper.toPublicResponseDTO(updatedUser);
   }
 
   public async removeMe(userData: IUserData): Promise<boolean> {
-    const user = await this.userRepository.findOne({
-      where: { id: userData.userId },
-    });
+    const user = await this.userRepository.findById(userData.userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
     await this.refreshTokenRepository.delete({ userId: userData.userId });
-    await this.userRepository.remove(user);
+    await this.userRepository.removeUser(user);
     return true;
   }
 
+  public async getUserById(userId: string): Promise<PublicUserResponseDto> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    return UserMapper.toPublicResponseDTO(user);
+  }
+
   public async isEmailUnique(email: string): Promise<void> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (user) {
       throw new ConflictException('User with this email already exists');
     }
